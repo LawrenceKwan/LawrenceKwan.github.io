@@ -192,7 +192,7 @@ class Project extends Sql
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
-    
+
     public function get_board_name()
     {
         $id = $_GET['id'];
@@ -200,7 +200,7 @@ class Project extends Sql
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
-    
+
     public function list_u_edit_library()
     {
         $group_id = $_GET['group_id'];
@@ -212,7 +212,7 @@ class Project extends Sql
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
-    
+
 
     public function list_u_selected_library()
     {
@@ -303,6 +303,31 @@ WHERE a.group_id = '$group_id';");
 
         Common::response(200);
     }
+
+
+    public function update_preference()
+    {
+        $project_id = $_POST['project_id'];
+        $name = $_POST['name'];
+        $selectedImages = $_POST['images'];
+        $group_id =  $_POST['groupId'];
+        $currentDateTime = new DateTime();
+
+        $this->db->query("DELETE FROM preference_list WHERE group_id='$group_id'");
+
+        $currentDateTime = new DateTime();
+        $currentTime = intval($currentDateTime->format('YmdHis'));
+
+        $this->db->query("UPDATE preference_group SET preference_name='$name', last_edit='$currentTime' WHERE group_id='$group_id'");
+
+        $imagesArray = explode(',', $selectedImages); // Split the selectedImages string into an array
+        foreach ($imagesArray as $image) {
+            $this->db->query("INSERT INTO preference_list (images_id, group_id, board_id) VALUES ('$image', '$group_id', '$project_id')");
+        }
+
+        Common::response(200);
+    }
+
 
 
     public function list_preferences()
