@@ -97,12 +97,71 @@ class Project extends Sql
         Common::response();
     }
 
+    // public function uploadMultiple()
+    // {
+    //     // Parameters
+    //     $createrId = $_POST['createrId'];
+    //     $time = time();
+    //     $groupId = $_POST['groupId'];
+    //     $fileType = strtolower($_POST['fileType']);
+    //     $filePath = '';
+
+    //     // Loop through uploaded files
+    //     $imgNum = 0; // Initialize image counter
+
+    //     foreach ($_FILES["file"]["tmp_name"] as $index => $tmpName) {
+    //         $lastName = explode('.', (string) $_FILES["file"]["name"][$index]);
+    //         $lastName = array_pop($lastName);
+
+    //         $fileName = $time . '-' . $index;
+    //         $targetPath = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
+    //         move_uploaded_file($tmpName, $targetPath);
+
+    //         $path = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
+    //         $image = new Imagick();
+    //         $image->readImage($path);
+
+    //         $oImgK = new Imagick();
+    //         $oImgK->setResolution(96, 96);
+    //         $oImgK->SetColorspace(Imagick::COLORSPACE_SRGB);
+    //         $oImgK->readimage($path);
+    //         $oImgK->setImageFormat("jpg");
+
+    //         //$oImgK->setImageCompression(imagick::COMPRESSION_JPEG);
+    //         //$oImgK->setImageCompressionQuality(90);
+    //         $oImgK->writeImages('./img/project/testimg/content/' . $fileName . '.jpg', true);
+    //         $oImgK->thumbnailImage(300, 300, true, true);
+    //         $oImgK->writeImages('./img/project/testimg/thumbnail/' . $fileName . '.jpg', true);
+    //         $oImgK->clear();
+
+    //         // Insert data
+    //         $this->db->query("
+    //         insert into board_list (creater_id, title, create_time, img_url, pages, group_id) 
+    //         values ('$createrId', '未命名的圖片', '$time', '$fileName', '1', '$groupId')
+    //     ");
+
+    //         // Increment the image counter
+    //         $imgNum++;
+    //     }
+
+    //     // Update project cover
+    //     $this->db->query("update board_group set cover = '$time-0' where id = '$groupId'");
+
+    //     // Send the response
+    //     echo json_encode([
+    //         "success" => true,
+    //         "message" => "上传成功",
+    //         "imgNum" => $imgNum // Include the image count in the response
+    //     ]);
+
+    //     exit;
+    // }
+    
     public function uploadMultiple()
     {
         // Parameters
         $createrId = $_POST['createrId'];
         $time = time();
-        $groupId = $_POST['groupId'];
         $fileType = strtolower($_POST['fileType']);
         $filePath = '';
 
@@ -136,17 +195,68 @@ class Project extends Sql
 
             // Insert data
             $this->db->query("
-            insert into board_list (creater_id, title, create_time, img_url, pages, group_id) 
-            values ('$createrId', '未命名的圖片', '$time', '$fileName', '1', '$groupId')
+            insert into gallery_list (creater_id, title, create_time, img_url, pages , tag_name) 
+            values ('$createrId', '未命名的圖片', '$time', '$fileName', '1','null')
         ");
 
             // Increment the image counter
             $imgNum++;
         }
+        // Send the response
+        echo json_encode([
+            "success" => true,
+            "message" => "上传成功",
+            "imgNum" => $imgNum // Include the image count in the response
+        ]);
 
-        // Update project cover
-        $this->db->query("update board_group set cover = '$time-0' where id = '$groupId'");
+        exit;
+    }
+    
+    public function uploadPublicMultiple()
+    {
+        // Parameters
+        $createrId = $_POST['createrId'];
+        $time = time();
+        $fileType = strtolower($_POST['fileType']);
+        $filePath = '';
 
+        // Loop through uploaded files
+        $imgNum = 0; // Initialize image counter
+
+        foreach ($_FILES["file"]["tmp_name"] as $index => $tmpName) {
+            $lastName = explode('.', (string) $_FILES["file"]["name"][$index]);
+            $lastName = array_pop($lastName);
+
+            $fileName = $time . '-' . $index;
+            $targetPath = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
+            move_uploaded_file($tmpName, $targetPath);
+
+            $path = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
+            $image = new Imagick();
+            $image->readImage($path);
+
+            $oImgK = new Imagick();
+            $oImgK->setResolution(96, 96);
+            $oImgK->SetColorspace(Imagick::COLORSPACE_SRGB);
+            $oImgK->readimage($path);
+            $oImgK->setImageFormat("jpg");
+
+            //$oImgK->setImageCompression(imagick::COMPRESSION_JPEG);
+            //$oImgK->setImageCompressionQuality(90);
+            $oImgK->writeImages('./img/project/testimg/content/' . $fileName . '.jpg', true);
+            $oImgK->thumbnailImage(300, 300, true, true);
+            $oImgK->writeImages('./img/project/testimg/thumbnail/' . $fileName . '.jpg', true);
+            $oImgK->clear();
+
+            // Insert data
+            $this->db->query("
+            insert into public_gallery (creater_id, title, create_time, img_url, pages, public, tag_name) 
+            values ('$createrId', '未命名的圖片', '$time', '$fileName', '1' , '1', 'null')
+        ");
+
+            // Increment the image counter
+            $imgNum++;
+        }
         // Send the response
         echo json_encode([
             "success" => true,
@@ -177,18 +287,51 @@ class Project extends Sql
         Common::response(200, $result);
     }
 
+    // public function list_library()
+    // {
+    //     $id = $_GET['id'];
+    //     $result = $this->db->query("select p.*, u.user_name from board_list p, user_list u where p.creater_id = u.id and group_id = '$id'");
+    //     $result = Common::fetch($result);
+    //     Common::response(200, $result);
+    // }
+    
     public function list_library()
     {
         $id = $_GET['id'];
-        $result = $this->db->query("select p.*, u.user_name from board_list p, user_list u where p.creater_id = u.id and group_id = '$id'");
+        $result = $this->db->query("select p.*, u.user_name from gallery_list p, user_list u where p.creater_id = u.id and creater_id = '$id'");
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
+    
+    public function list_all_library()
+    {
+        // $result = $this->db->query("select * from gallery_list p, user_list u where p.creater_id = u.id");
+        $result = $this->db->query("SELECT * FROM gallery_list GROUP BY img_url;");
+        $result = Common::fetch($result);
+        Common::response(200, $result);
+    }
+    
+    public function list_public_library()
+    {
+        $result = $this->db->query("select * from public_gallery");
+        $result = Common::fetch($result);
+        Common::response(200, $result);
+    }
+    
+    public function filteredList()
+    {
+    $id = $_GET['id'];
+    $tag = $_GET['tag']; // Assuming the tag is passed as a GET parameter
+    $result = $this->db->query("SELECT p.*, u.user_name FROM gallery_list p, user_list u WHERE p.creater_id = u.id AND p.creater_id = '$id' AND p.tag_name = '$tag'");
+    $result = Common::fetch($result);
+    Common::response(200, $result);
+    }
+
 
     public function list_u_library()
     {
         $id = $_GET['id'];
-        $result = $this->db->query("select p.*, u.user_name from board_list p, user_list u where p.creater_id = u.id and group_id = '$id'");
+        $result = $this->db->query("select * from gallery_list where creater_id = '$id'");
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
@@ -216,14 +359,9 @@ class Project extends Sql
 
     public function list_u_selected_library()
     {
-        $group_id = $_GET['group_id'];
+        $board_id = $_GET['group_id'];
 
-        $result = $this->db->query("SELECT a.*, b.img_url, a.preference_name,
-       CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END AS board_selected
-FROM `preference_group` AS a
-LEFT JOIN `board_list` AS b ON a.board_id = b.group_id
-LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id
-WHERE a.group_id = '$group_id';");
+        $result = $this->db->query("SELECT a.*, b.img_url, a.preference_name, CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END AS board_selected FROM `preference_group` AS a LEFT JOIN `gallery_list` AS b ON a.board_id = b.creater_id LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id WHERE a.group_id = '$board_id';");
 
         $result = Common::fetch($result);
         Common::response(200, $result);
@@ -338,7 +476,12 @@ WHERE a.group_id = '$group_id';");
         Common::response(200, $result);
     }
 
-
+    public function list_tags()
+    {
+        $result = $this->db->query("SELECT * FROM tag_list");
+        $result = Common::fetch($result);
+        Common::response(200, $result);
+    }
 
     public function updateStatus($id, $newExpiration)
     {
@@ -419,8 +562,11 @@ WHERE a.group_id = '$group_id';");
                 $status = '1';
             }
 
-        } else if ($subscription == "Pro Plan") {
+        } else if($subscription == "Pro Plan") {
             $subscription = '1';
+            $status = '0';
+        } else if ($subscription == "Advance Plan") {
+            $subscription = '2';
             $status = '0';
         }
 
