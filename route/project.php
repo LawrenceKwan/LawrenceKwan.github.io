@@ -158,59 +158,66 @@ class Project extends Sql
     // }
     
     public function uploadMultiple()
-    {
-        // Parameters
-        $createrId = $_POST['createrId'];
-        $time = time();
-        $fileType = strtolower($_POST['fileType']);
-        $filePath = '';
+{
+    // Parameters
+    $createrId = $_POST['createrId'];
+    $id = $_POST['id'];
+    $time = time();
+    $fileType = strtolower($_POST['fileType']);
+    $filePath = '';
 
-        // Loop through uploaded files
-        $imgNum = 0; // Initialize image counter
+    // Loop through uploaded files
+    $imgNum = 0; // Initialize image counter
 
-        foreach ($_FILES["file"]["tmp_name"] as $index => $tmpName) {
-            $lastName = explode('.', (string) $_FILES["file"]["name"][$index]);
-            $lastName = array_pop($lastName);
+    foreach ($_FILES["file"]["tmp_name"] as $index => $tmpName) {
+        $lastName = pathinfo($_FILES["file"]["name"][$index], PATHINFO_EXTENSION);
+        $fileName = $time . '-' . $index;
+        $targetPath = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
 
-            $fileName = $time . '-' . $index;
-            $targetPath = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
-            move_uploaded_file($tmpName, $targetPath);
+        move_uploaded_file($tmpName, $targetPath);
 
-            $path = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
-            $image = new Imagick();
-            $image->readImage($path);
+        $path = "./img/project/testimg/raw/" . $fileName . '.' . $lastName;
+        $image = new Imagick($path);
 
-            $oImgK = new Imagick();
-            $oImgK->setResolution(96, 96);
-            $oImgK->SetColorspace(Imagick::COLORSPACE_SRGB);
-            $oImgK->readimage($path);
-            $oImgK->setImageFormat("jpg");
+        $oImgK = new Imagick();
+        $oImgK->setResolution(96, 96);
+        $oImgK->setColorspace(Imagick::COLORSPACE_SRGB);
+        $oImgK->readImage($path);
+        $oImgK->setImageFormat("jpg");
+        //$oImgK->setImageCompression(imagick::COMPRESSION_JPEG);
+        //$oImgK->setImageCompressionQuality(90);
+        $oImgK->writeImage('./img/project/testimg/content/' . $fileName . '.jpg');
+        $oImgK->thumbnailImage(300, 300, true, true);
+        $oImgK->writeImage('./img/project/testimg/thumbnail/' . $fileName . '.jpg');
+        $oImgK->clear();
 
-            //$oImgK->setImageCompression(imagick::COMPRESSION_JPEG);
-            //$oImgK->setImageCompressionQuality(90);
-            $oImgK->writeImages('./img/project/testimg/content/' . $fileName . '.jpg', true);
-            $oImgK->thumbnailImage(300, 300, true, true);
-            $oImgK->writeImages('./img/project/testimg/thumbnail/' . $fileName . '.jpg', true);
-            $oImgK->clear();
-
-            // Insert data
+        // Insert data
+        if (empty($id) || !isset($id)) {
             $this->db->query("
-            insert into gallery_list (creater_id, title, create_time, img_url, pages , tag_name) 
-            values ('$createrId', '未命名的圖片', '$time', '$fileName', '1','null')
-        ");
-
-            // Increment the image counter
-            $imgNum++;
+                INSERT INTO gallery_list (creater_id, title, create_time, img_url, pages, tag_name) 
+                VALUES ('$createrId', '未命名的圖片', '$time', '$fileName', '1', 'null')
+            ");
+        } else {
+            $this->db->query("
+                INSERT INTO board_list (group_id, creater_id, title, create_time, img_url, pages, tag_name) 
+                VALUES ('$id', '$createrId', '未命名的圖片', '$time', '$fileName', '1', 'null')
+            ");
         }
-        // Send the response
-        echo json_encode([
-            "success" => true,
-            "message" => "上传成功",
-            "imgNum" => $imgNum // Include the image count in the response
-        ]);
 
-        exit;
+        // Increment the image counter
+        $imgNum++;
     }
+
+    // Send the response
+    echo json_encode([
+        "success" => true,
+        "message" => "上传成功",
+        "imgNum" => $imgNum // Include the image count in the response
+    ]);
+
+    exit;
+}
+
     
     public function uploadPublicMultiple()
     {
@@ -303,6 +310,14 @@ class Project extends Sql
         Common::response(200, $result);
     }
     
+    public function list_board_library()
+    {
+        $id = $_GET['id'];
+        $result = $this->db->query("select * from board_list where group_id = '$id'");
+        $result = Common::fetch($result);
+        Common::response(200, $result);
+    }
+    
     public function list_all_library()
     {
         // $result = $this->db->query("select * from gallery_list p, user_list u where p.creater_id = u.id");
@@ -331,7 +346,8 @@ class Project extends Sql
     public function list_u_library()
     {
         $id = $_GET['id'];
-        $result = $this->db->query("select * from gallery_list where creater_id = '$id'");
+        // $result = $this->db->query("select * from gallery_list where creater_id = '$id'");
+        $result = $this->db->query("select * from board_list where group_id = '$id'");
         $result = Common::fetch($result);
         Common::response(200, $result);
     }
@@ -361,7 +377,7 @@ class Project extends Sql
     {
         $board_id = $_GET['group_id'];
 
-        $result = $this->db->query("SELECT a.*, b.img_url, a.preference_name, CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END AS board_selected FROM `preference_group` AS a LEFT JOIN `gallery_list` AS b ON a.board_id = b.creater_id LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id WHERE a.group_id = '$board_id';");
+        $result = $this->db->query("SELECT a.*, b.img_url, a.preference_name, CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END AS board_selected FROM `preference_group` AS a LEFT JOIN `board_list` AS b ON a.board_id = b.group_id LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id WHERE a.group_id = '$board_id';");
 
         $result = Common::fetch($result);
         Common::response(200, $result);
@@ -415,6 +431,23 @@ class Project extends Sql
         $id = $_POST['id'];
         $title = $_POST['title'];
         $this->db->query("update project_list set title = '$title' where id = '$id'");
+        Common::response(200);
+    }
+    
+     public function updateRole()
+    {
+        $role = $_POST['role'];
+        $id = $_POST['id'] - 1000000;
+        
+        if ($role == 'Admin') {
+        $role = '0';
+        } else if ($role == 'Designer') {
+            $role = '1';
+        } else if ($role == 'Customer') {
+            $role = '2';
+        }
+        
+        $this->db->query("update user_list set role = '$role' where id = '$id'");
         Common::response(200);
     }
 

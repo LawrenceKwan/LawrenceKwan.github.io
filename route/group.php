@@ -95,7 +95,8 @@ public function save() {
         public function save_img_tag (){
             $name = $_POST['name'];
             $img_url = $_POST['img_url'];
-            $this -> db -> query("update gallery_list set tag_name = '$name' where img_url = '$img_url'");
+            $id = $_POST['id'];
+            $this -> db -> query("update board_list set tag_name = '$name' where img_url = '$img_url' and group_id = '$id'");
             Common::response();
         }
         
@@ -126,7 +127,9 @@ public function save() {
             $status = $_POST['status'];
             $pages = $_POST['pages'];
             $tag_name = $_POST['tag_name'];
-            $this -> db -> query("INSERT INTO gallery_list (img_url, creater_id, title, create_time, status, pages, tag_name) VALUES ('$img_url', '$id', '$title', '$create_time', '$status','$pages','$tag_name');");
+            $group_id = $_POST['group_id'];
+            // $this -> db -> query("INSERT INTO gallery_list (img_url, creater_id, title, create_time, status, pages, tag_name) VALUES ('$img_url', '$id', '$title', '$create_time', '$status','$pages','$tag_name');");
+            $this -> db -> query("INSERT INTO board_list (group_id, img_url, creater_id, title, create_time, status, pages, tag_name) VALUES ('$group_id' , '$img_url', '$id', '$title', '$create_time', '$status','$pages','$tag_name');");
             Common::response();
         }
         
@@ -191,16 +194,31 @@ public function del_board()
     Common::response();
 }
 
+// public function del_gallery_img()
+// {
+//     $img_url = $_GET['img_url'];
+//     $group_id = $_GET['id'];
+
+//     // Delete the record from the project_group table
+//     // $this->db->query("DELETE FROM gallery_list WHERE img_url = '$img_url'");
+//     $this->db->query("DELETE FROM board_list WHERE img_url = '$img_url and group_id = '$group_id'");
+
+//     // Send the response
+//     Common::response();
+// }
+
 public function del_gallery_img()
 {
     $img_url = $_GET['img_url'];
+    $group_id = $_GET['id'];
 
     // Delete the record from the project_group table
-    $this->db->query("DELETE FROM gallery_list WHERE img_url = '$img_url'");
+    $this->db->query("DELETE FROM board_list WHERE img_url = '$img_url' AND group_id = '$group_id'");
 
     // Send the response
     Common::response();
 }
+
 
 public function del_public_gallery_img()
 {
