@@ -416,6 +416,34 @@ LEFT JOIN user_list ul ON pg.creater_id = ul.id;
     Common::response(200, $result);
 }
 
+    public function list_u_view_library()
+    {
+    $board_id = $_GET['group_id'];
+    
+    $result = $this->db->query("SELECT a.*, b.img_url, a.preference_name, CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END AS board_selected FROM `preference_group` AS a LEFT JOIN `board_list` AS b ON a.board_id = b.group_id LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id WHERE a.group_id = '$board_id';");
+
+    $result1 = $this->db->query("SELECT a.*, b.img_url, a.preference_name
+    FROM `preference_group` AS a
+    LEFT JOIN `board_list` AS b ON a.board_id = b.group_id
+    LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id
+    WHERE a.group_id = '$board_id' AND (CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END) = 1;
+    ");
+    
+    if ($result->num_rows === 1) {
+    $result1 = $this->db->query("SELECT a.*, b.img_url, a.preference_name
+    FROM `preference_group` AS a
+    LEFT JOIN `gallery_list` AS b ON a.board_id = b.creater_id
+    LEFT JOIN `preference_list` AS c ON a.group_id = c.group_id AND b.img_url = c.images_id
+    WHERE a.group_id = '$board_id' AND (CASE WHEN c.images_id IS NOT NULL THEN 1 ELSE 0 END) = 1;
+    
+    ");
+        
+    }
+
+    $result1 = Common::fetch($result1);
+    Common::response(200, $result1);
+}
+
     
     /**
      * 移除项目
